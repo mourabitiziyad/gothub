@@ -1,9 +1,5 @@
 "use client";
-import {
-  CalendarIcon,
-  FaceIcon,
-  RocketIcon,
-} from "@radix-ui/react-icons";
+import { CalendarIcon, FaceIcon, RocketIcon } from "@radix-ui/react-icons";
 import {
   Command,
   CommandEmpty,
@@ -11,7 +7,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "~/components/ui/command";
 import { useState, useEffect } from "react";
 import useDebounce from "~/hooks/useDebounce";
@@ -26,12 +21,15 @@ export function CommandBar() {
   const [query, setQuery] = useState<string>("");
   const queryClient = useQueryClient();
 
-  const debouncedQuery = useDebounce(query, 300, (debouncedValue) => {
+  const handleDebouncedQuery = async (debouncedValue: string) => {
     if (debouncedValue) {
-      queryClient.invalidateQueries({ queryKey: ["github", "getUsersList"] });
-      console.log("debouncedValue");
+      await queryClient.invalidateQueries({
+        queryKey: ["github", "getUsersList"],
+      });
     }
-  });
+  };
+
+  const debouncedQuery = useDebounce(query, 300, handleDebouncedQuery);
 
   const {
     data: users,
@@ -59,7 +57,7 @@ export function CommandBar() {
           {isLoading && (
             <CommandGroup heading="Users">
               {Array.from({ length: 4 }).map((_, i) => (
-                <UserSkeleton />
+                <UserSkeleton key={i} />
               ))}
             </CommandGroup>
           )}
@@ -77,7 +75,10 @@ export function CommandBar() {
                 <ScrollArea className="max-h-40 overflow-y-auto">
                   {users.map((user) => (
                     <CommandItem key={user.id}>
-                      <Link className="flex items-center w-full" href={`/user/${user.login}`}>
+                      <Link
+                        className="flex w-full items-center"
+                        href={`/user/${user.login}`}
+                      >
                         <img
                           src={user.avatarUrl}
                           alt={user.login}

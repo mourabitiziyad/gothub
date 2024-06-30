@@ -1,14 +1,20 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-function useDebounce<T>(value: T, delay: number, callback?: (debouncedValue: T) => void): T {
+function useDebounce<T>(value: T, delay: number, callback?: (debouncedValue: T) => void | Promise<void>): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
       if (callback) {
-        callback(value);
+        void (async () => {
+          try {
+            await callback(value);
+          } catch (error) {
+            console.error('Error in callback:', error);
+          }
+        })();
       }
     }, delay);
 
