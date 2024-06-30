@@ -5,8 +5,8 @@ import { GeistSans } from "geist/font/sans";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata = {
-  title: "Gothub",
-  description: "Gothub is a T3 Stack implementation that allows your to query your GitHub repositories.",
+  title: "Fetchub",
+  description: "Fetchub is a T3 Stack implementation that allows your to query your GitHub repositories.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
