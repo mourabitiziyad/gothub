@@ -18,7 +18,7 @@ export interface SearchResponse {
   };
 }
 
-export interface User {
+export interface UserInfo {
   id: string;
   login: string;
   avatarUrl: string;
@@ -48,7 +48,7 @@ export interface User {
 }
 
 export interface UserResponse {
-  user: User;
+  user: UserInfo;
 }
 
 export const githubRouter = createTRPCRouter({
