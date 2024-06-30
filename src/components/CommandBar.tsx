@@ -1,10 +1,7 @@
 "use client";
 import {
   CalendarIcon,
-  EnvelopeClosedIcon,
   FaceIcon,
-  GearIcon,
-  PersonIcon,
   RocketIcon,
 } from "@radix-ui/react-icons";
 import {
