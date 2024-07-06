@@ -10,7 +10,7 @@ export default function Layout({
 }) {
   return (
     <div>
-      <Header params={params} />
+      {/* <Header params={params} /> */}
       {children}
     </div>
   );
