@@ -1,5 +1,4 @@
 "use client";
-import { CalendarIcon, FaceIcon, RocketIcon } from "@radix-ui/react-icons";
 import {
   Command,
   CommandEmpty,
@@ -8,7 +7,7 @@ import {
   CommandItem,
   CommandList,
 } from "~/components/ui/command";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import useDebounce from "~/hooks/useDebounce";
 import { api } from "~/trpc/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,15 +30,18 @@ export function CommandBar() {
     setRecentlyViewedUsers(getRecentlyViewedUsers());
   }, []);
 
-  const handleDebouncedQuery = useCallback(async (debouncedValue: string) => {
-    if (debouncedValue) {
-      await queryClient.invalidateQueries({
-        queryKey: ["github", "getUsersList"],
-      });
-    }
-  }, [queryClient]);
+  const handleDebouncedQuery = useCallback(
+    async (debouncedValue: string) => {
+      if (debouncedValue) {
+        await queryClient.invalidateQueries({
+          queryKey: ["github", "getUsersList"],
+        });
+      }
+    },
+    [queryClient],
+  );
 
-  const debouncedQuery = useDebounce(query, 300, handleDebouncedQuery);
+  const debouncedQuery = useDebounce(query, 250, handleDebouncedQuery);
 
   const {
     data: users,
@@ -58,7 +60,7 @@ export function CommandBar() {
       shouldFilter={false}
     >
       <CommandInput
-        placeholder="Type a command or search..."
+        placeholder="Search Github users..."
         value={query}
         onValueChange={(e) => setQuery(e)}
       />
@@ -79,28 +81,26 @@ export function CommandBar() {
           </div>
         )}
         {isSuccess && users?.length > 0 && (
-          <>
-            <CommandGroup heading="Users">
-              <ScrollArea className="max-h-40 overflow-y-auto">
-                {users.map((user) => (
-                  <CommandItem key={user.id}>
-                    <Link
-                      onClick={() => addRecentlyViewedUser(user)}
-                      className="flex w-full items-center"
-                      href={`/user/${user.login}`}
-                    >
-                      <img
-                        src={user.avatarUrl}
-                        alt={user.login}
-                        className="mr-2 h-4 w-4 rounded-full"
-                      />
-                      <span>{user.login}</span>
-                    </Link>
-                  </CommandItem>
-                ))}
-              </ScrollArea>
-            </CommandGroup>
-          </>
+          <CommandGroup heading="Users">
+            <ScrollArea className="max-h-40 overflow-y-auto">
+              {users.map((user) => (
+                <CommandItem key={user.id}>
+                  <Link
+                    onClick={() => addRecentlyViewedUser(user)}
+                    className="flex w-full items-center"
+                    href={`/user/${user.login}`}
+                  >
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.login}
+                      className="mr-2 h-4 w-4 rounded-full"
+                    />
+                    <span>{user.login}</span>
+                  </Link>
+                </CommandItem>
+              ))}
+            </ScrollArea>
+          </CommandGroup>
         )}
         {recentlyViewedUsers.length > 0 && (
           <CommandGroup heading="Recently Viewed">
