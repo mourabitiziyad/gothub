@@ -223,7 +223,7 @@ export default async function Page({ params }: { params: { id: string } }) {
                       {user.contributionsCollection.totalCommitContributions}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="flex w-full overflow-x-scroll">
+                  <CardContent className="flex w-full overflow-x-scroll pb-10">
                     {user.contributionsCollection.contributionCalendar.weeks.map(
                       (week, weekIndex) => (
                         <div key={weekIndex} className="flex flex-col">
@@ -231,7 +231,7 @@ export default async function Page({ params }: { params: { id: string } }) {
                             <Tooltip disableHoverableContent key={dayIndex}>
                               <TooltipTrigger className="m-0.5" asChild>
                                 <span
-                                  className="h-2 w-2"
+                                  className="h-2.5 w-2.5"
                                   style={{
                                     backgroundColor: day.color,
                                   }}
@@ -253,6 +253,11 @@ export default async function Page({ params }: { params: { id: string } }) {
                         </div>
                       ),
                     )}
+                    <CardFooter className="absolute bottom-2 left-0 gap-2 px-6 py-3">
+                      <div className="text-xs text-muted-foreground">
+                        Contributions made in the past year
+                      </div>
+                    </CardFooter>
                   </CardContent>
                 </Card>
               </div>
