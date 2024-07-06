@@ -23,22 +23,56 @@ export interface UserInfo {
   login: string;
   avatarUrl: string;
   url: string;
+  websiteUrl?: string;
   name?: string;
   bio?: string;
   location?: string;
   company?: string;
   email?: string;
+  organizations: {
+    nodes: {
+      id: string;
+      login: string;
+      avatarUrl: string;
+    }[];
+  };
+  contributionsCollection: {
+    totalCommitContributions: number;
+    contributionCalendar: {
+      totalContributions: number;
+      weeks: {
+        contributionDays: {
+          color: string;
+          contributionCount: number;
+          date: Date;
+        }[];
+      }[];
+    };
+    restrictedContributionsCount: number;
+  };
   followers: {
     totalCount: number;
   };
   following: {
     totalCount: number;
   };
-  repositories: {
-    totalCount: number;
-  };
   starredRepositories: {
     totalCount: number;
+  };
+  repositories: {
+    totalCount: number;
+    nodes: {
+      name: string;
+      description: string;
+      url: string;
+      homepageUrl: string;
+      stargazers: {
+        totalCount: number;
+      };
+      forks: {
+        totalCount: number;
+      };
+    }[];
   };
   gists: {
     totalCount: number;
@@ -91,37 +125,60 @@ export const githubRouter = createTRPCRouter({
     .input(z.object({ username: z.string() }))
     .query(async ({ input }) => {
       const userQuery = `
-        query ($username: String!) {
-          user(login: $username) {
-            id
-            login
-            name
-            avatarUrl
-            url
-            bio
-            location
-            company
-            email
-            websiteUrl
-            followers {
-              totalCount
+      query ($username: String!) {
+        user(login: $username) {
+          id
+          login
+          name
+          avatarUrl
+          url
+          bio
+          location
+          company
+          email
+          websiteUrl
+          followers {
+            totalCount
+          }
+          following {
+            totalCount
+          }
+          starredRepositories {
+            totalCount
+          }
+          organizations(first: 100) {
+            nodes {
+              avatarUrl
+              login
             }
-            following {
-              totalCount
-            }
-            organizations(first: 100) {
-              nodes {
-                avatarUrl
-                login
+          }
+          contributionsCollection {
+            totalCommitContributions
+            contributionCalendar {
+              totalContributions
+              weeks {
+                contributionDays {
+                  color
+                  contributionCount
+                  date
+                }
               }
             }
-            achievements: contributionsCollection {
-              totalCommitContributions
-              restrictedContributionsCount
+            restrictedContributionsCount
+          }
+          repositories(first: 100, orderBy: { field: UPDATED_AT, direction: DESC }) {
+            nodes {
+              name
+              description
+              url
+              stargazerCount
+              forkCount
+              updatedAt
             }
           }
         }
-      `;
+      }
+    `;
       try {
         const result = await octokit.graphql<UserResponse>(userQuery, {
           username: input.username,
