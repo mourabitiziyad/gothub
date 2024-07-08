@@ -14,7 +14,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Separator } from "./ui/separator";
-import { Repository } from "~/server/api/routers/github";
+import type { Repository } from "~/server/api/routers/github";
 
 export default function RepositoryList({
   repositories,
@@ -39,19 +39,18 @@ export default function RepositoryList({
     setOwnerFilter(value);
   };
 
-  const filteredRepositories = repositories.filter((node: any) => {
+  const filteredRepositories = repositories.filter((node: Repository) => {
     const matchesSearch =
       node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (node.description &&
-        node.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      node.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false;
 
     const matchesLanguage =
       languageFilter === "all" ||
-      (node.languages.nodes.length > 0 &&
-        node.languages.nodes.some(
-          (lang: { name: string; color: string }) =>
-            lang.name.toLowerCase() === languageFilter.toLowerCase(),
-        ));
+      node.languages.nodes.some(
+        (lang: { name: string; color: string }) =>
+          lang.name.toLowerCase() === languageFilter.toLowerCase(),
+      );
 
     const matchesOwner =
       ownerFilter === "all" ||
@@ -79,8 +78,8 @@ export default function RepositoryList({
             <SelectItem value="all">All Languages</SelectItem>
             {Array.from(
               new Set(
-                repositories.flatMap((repo: any) =>
-                  repo.languages.nodes.map((lang: any) => lang.name),
+                repositories.flatMap((repo: Repository) =>
+                  repo.languages.nodes.map((lang: { name: string; color: string }) => lang.name),
                 ),
               ),
             ).map((lang: string) => (
@@ -103,7 +102,7 @@ export default function RepositoryList({
       </div>
       <div className="relative h-full">
         <ScrollArea className="h-[75vh] w-full">
-          {filteredRepositories.map((node: any) => (
+          {filteredRepositories.map((node: Repository) => (
             <div key={node.name} className="py-2">
               <Link href={node.url} className="text-lg font-bold">
                 {node.name}
@@ -131,10 +130,10 @@ export default function RepositoryList({
                 <div className="mt-2 flex items-center gap-2">
                   <div
                     className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: node.languages.nodes[0].color }}
+                    style={{ backgroundColor: node.languages.nodes[0]?.color }}
                   />
                   <p className="text-xs font-medium">
-                    {node.languages.nodes[0].name}
+                    {node.languages.nodes[0]?.name}
                   </p>
                 </div>
               )}

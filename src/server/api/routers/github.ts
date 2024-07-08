@@ -3,7 +3,7 @@ import { graphqlWithAuth } from "~/lib/octokit";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 // Define TypeScript interfaces
-interface User {
+export interface User {
   id: string;
   login: string;
   avatarUrl: string;
