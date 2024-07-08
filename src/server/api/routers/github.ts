@@ -1,5 +1,6 @@
 import { z } from "zod";
-import octokit from "~/lib/octokit";
+import { octokit, graphqlWithAuth } from "~/lib/octokit";
+import type { GraphQlQueryResponseData } from "@octokit/graphql";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -166,16 +167,6 @@ export const githubRouter = createTRPCRouter({
             }
             restrictedContributionsCount
           }
-          repositories(first: 100, orderBy: { field: UPDATED_AT, direction: DESC }) {
-            nodes {
-              name
-              description
-              url
-              stargazerCount
-              forkCount
-              updatedAt
-            }
-          }
         }
       }
     `;
@@ -187,6 +178,52 @@ export const githubRouter = createTRPCRouter({
       } catch (error) {
         console.error("Error fetching GitHub user:", error);
         throw new Error("Failed to fetch GitHub user");
+      }
+    }),
+  getUserRepositories: publicProcedure
+    .input(
+      z.object({
+        username: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const data = await graphqlWithAuth<GraphQlQueryResponseData>(
+          `
+          query ($username: String!) {
+            user(login: $username) {
+              repositories(first: 5, orderBy: { field: UPDATED_AT, direction: DESC }) {
+              totalCount
+                nodes {
+                  name
+                  description
+                  url
+                  languages(first: 1, orderBy: { field: SIZE, direction: DESC }) {
+                    nodes {
+                      name
+                      color
+                    }
+                  }
+                  stargazerCount
+                  forkCount
+                  updatedAt
+                  owner {
+                    login
+                    avatarUrl
+                  }
+                }
+              }
+            }
+          }
+        `,
+          {
+            username: input.username,
+          },
+        );
+        return data;
+      } catch (error) {
+        console.error("Error fetching GitHub user repositories:", error);
+        throw new Error("Failed to fetch GitHub user repositories");
       }
     }),
 });
