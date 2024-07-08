@@ -163,7 +163,7 @@ export const githubRouter = createTRPCRouter({
       const reposQuery = `
         query ($username: String!) {
           user(login: $username) {
-            repositories(first: 5, orderBy: { field: UPDATED_AT, direction: DESC }) {
+            repositories(first: 100, orderBy: { field: UPDATED_AT, direction: DESC }) {
               totalCount
               nodes {
                 name
