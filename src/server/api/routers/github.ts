@@ -1,42 +1,26 @@
 import { z } from "zod";
-import { octokit, graphqlWithAuth } from "~/lib/octokit";
-import type { GraphQlQueryResponseData } from "@octokit/graphql";
-
+import { graphqlWithAuth } from "~/lib/octokit";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
-export interface User {
+// Define TypeScript interfaces
+interface User {
   id: string;
   login: string;
   avatarUrl: string;
   url: string;
 }
 
-export interface SearchResponse {
-  search: {
-    edges: {
-      node: User;
-    }[];
-  };
-}
-
-export interface UserInfo {
-  id: string;
-  login: string;
-  avatarUrl: string;
-  url: string;
-  websiteUrl?: string;
+interface UserInfo extends User {
   name?: string;
   bio?: string;
   location?: string;
   company?: string;
   email?: string;
-  organizations: {
-    nodes: {
-      id: string;
-      login: string;
-      avatarUrl: string;
-    }[];
-  };
+  websiteUrl?: string;
+  followers: { totalCount: number };
+  following: { totalCount: number };
+  starredRepositories: { totalCount: number };
+  organizations: { nodes: { id: string, avatarUrl: string; login: string }[] };
   contributionsCollection: {
     totalCommitContributions: number;
     contributionCalendar: {
@@ -45,51 +29,39 @@ export interface UserInfo {
         contributionDays: {
           color: string;
           contributionCount: number;
-          date: Date;
+          date: string;
         }[];
       }[];
     };
     restrictedContributionsCount: number;
   };
-  followers: {
-    totalCount: number;
-  };
-  following: {
-    totalCount: number;
-  };
-  starredRepositories: {
-    totalCount: number;
-  };
-  repositories: {
-    totalCount: number;
-    nodes: {
-      name: string;
-      description: string;
-      url: string;
-      homepageUrl: string;
-      stargazers: {
-        totalCount: number;
-      };
-      forks: {
-        totalCount: number;
-      };
-    }[];
-  };
-  gists: {
-    totalCount: number;
-  };
-  createdAt: string;
+}
+
+export interface Repository {
+  name: string;
+  description: string;
+  url: string;
+  languages: { nodes: { name: string; color: string }[] };
+  stargazerCount: number;
+  forkCount: number;
   updatedAt: string;
+  owner: { login: string; avatarUrl: string };
 }
 
-export interface UserResponse {
-  user: UserInfo;
+interface RepositoriesResponse {
+  user: {
+    repositories: {
+      totalCount: number;
+      nodes: Repository[];
+    };
+  };
 }
 
+// Define your TRPC router with the added TypeScript interfaces
 export const githubRouter = createTRPCRouter({
   getUsersList: publicProcedure
     .input(z.object({ text: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input }): Promise<User[]> => {
       const searchQuery = `
         query ($searchTerm: String!) {
           search(query: $searchTerm, type: USER, first: 5) {
@@ -107,10 +79,10 @@ export const githubRouter = createTRPCRouter({
         }
       `;
       try {
-        const results = await octokit.graphql<SearchResponse>(searchQuery, {
+        const results = await graphqlWithAuth<{ search: { edges: { node: User }[] } }>(searchQuery, {
           searchTerm: input.text,
         });
-        const users = results.search.edges.map(({ node }: { node: User }) => ({
+        const users: User[] = results.search.edges.map(({ node }) => ({
           id: node.id,
           login: node.login,
           avatarUrl: node.avatarUrl,
@@ -124,7 +96,7 @@ export const githubRouter = createTRPCRouter({
     }),
   getUserInfo: publicProcedure
     .input(z.object({ username: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input }): Promise<UserInfo> => {
       const userQuery = `
       query ($username: String!) {
         user(login: $username) {
@@ -149,6 +121,7 @@ export const githubRouter = createTRPCRouter({
           }
           organizations(first: 100) {
             nodes {
+              id
               avatarUrl
               login
             }
@@ -171,7 +144,7 @@ export const githubRouter = createTRPCRouter({
       }
     `;
       try {
-        const result = await octokit.graphql<UserResponse>(userQuery, {
+        const result = await graphqlWithAuth<{ user: UserInfo }>(userQuery, {
           username: input.username,
         });
         return result.user;
@@ -186,40 +159,38 @@ export const githubRouter = createTRPCRouter({
         username: z.string(),
       }),
     )
-    .query(async ({ input }) => {
-      try {
-        const data = await graphqlWithAuth<GraphQlQueryResponseData>(
-          `
-          query ($username: String!) {
-            user(login: $username) {
-              repositories(first: 5, orderBy: { field: UPDATED_AT, direction: DESC }) {
+    .query(async ({ input }): Promise<RepositoriesResponse> => {
+      const reposQuery = `
+        query ($username: String!) {
+          user(login: $username) {
+            repositories(first: 5, orderBy: { field: UPDATED_AT, direction: DESC }) {
               totalCount
-                nodes {
-                  name
-                  description
-                  url
-                  languages(first: 1, orderBy: { field: SIZE, direction: DESC }) {
-                    nodes {
-                      name
-                      color
-                    }
+              nodes {
+                name
+                description
+                url
+                languages(first: 1, orderBy: { field: SIZE, direction: DESC }) {
+                  nodes {
+                    name
+                    color
                   }
-                  stargazerCount
-                  forkCount
-                  updatedAt
-                  owner {
-                    login
-                    avatarUrl
-                  }
+                }
+                stargazerCount
+                forkCount
+                updatedAt
+                owner {
+                  login
+                  avatarUrl
                 }
               }
             }
           }
-        `,
-          {
-            username: input.username,
-          },
-        );
+        }
+      `;
+      try {
+        const data = await graphqlWithAuth<RepositoriesResponse>(reposQuery, {
+          username: input.username,
+        });
         return data;
       } catch (error) {
         console.error("Error fetching GitHub user repositories:", error);
