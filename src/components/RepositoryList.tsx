@@ -104,7 +104,7 @@ export default function RepositoryList({
         <ScrollArea className="h-[75vh] w-full">
           {filteredRepositories.map((node: Repository) => (
             <div key={node.name} className="py-2">
-              <Link href={node.url} className="text-lg font-bold">
+              <Link href={node.url} target="_blank" className="text-lg font-bold hover:underline">
                 {node.name}
               </Link>
               <p className="mb-4 text-sm">{node.description}</p>
