@@ -14,14 +14,15 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Separator } from "./ui/separator";
+import { Repository } from "~/server/api/routers/github";
 
 export default function RepositoryList({
   repositories,
   params,
-}: {
-  repositories: any[];
+}: Readonly<{
+  repositories: Repository[];
   params: { id: string };
-}) {
+}>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
@@ -48,7 +49,7 @@ export default function RepositoryList({
       languageFilter === "all" ||
       (node.languages.nodes.length > 0 &&
         node.languages.nodes.some(
-          (lang: any) =>
+          (lang: { name: string; color: string }) =>
             lang.name.toLowerCase() === languageFilter.toLowerCase(),
         ));
 
